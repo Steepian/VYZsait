@@ -1,0 +1,44 @@
+{
+    // Настройка интерпретатора Python
+    "python.pythonPath": "C:/Users/demin/OneDrive/Документы/SAIT/myenv/Scripts/python.exe",
+    // Форматирование кода
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    // Сортировка импортов
+    "python.sortImports.args": [
+        "--profile=black"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    // Линтеры
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.flake8Enabled": true,
+    // Настройки форматирования Black
+    "python.formatting.blackArgs": [
+        "--line-length=120"
+    ],
+    // Автосохранение
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    // Дополнительные настройки редактора
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnPaste": true,
+    // Настройки терминала
+    "terminal.integrated.shellArgs.windows": [
+        "-NoExit"
+    ],
+    // Настройки линтинга
+    "python.linting.pylintArgs": [
+        "--disable=E501"
+    ],
+    // Настройки автодополнения
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": true,
+        "strings": true
+    },
+}
