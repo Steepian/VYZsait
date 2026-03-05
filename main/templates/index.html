@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Отзывы о ВУЗах{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Список университетов</h1>
+
+<div class="row">
+    {% for university in universities %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ university.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ university.city }}</h6>
+                    <p class="card-text">{{ university.description|truncatewords:30 }}</p>
+                    <a href="{% url 'university_detail' university.id %}" class="btn btn-primary">Подробнее</a>
+                </div>
+                <div class="card-footer text-muted">
+                    Добавлено: {{ university.created_at|date:"d.m.Y" }}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <p>Пока нет ни одного университета. Добавьте первый через админку.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
