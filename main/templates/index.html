@@ -12,6 +12,15 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ university.name }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">{{ university.city }}</h6>
+                    <!-- Рейтинг -->
+                    <p class="mb-2">
+                        Рейтинг: 
+                        {% if university.rating > 0 %}
+                            {{ university.rating }} / 5
+                        {% else %}
+                            пока нет оценок
+                        {% endif %}
+                    </p>
                     <p class="card-text">{{ university.description|truncatewords:30 }}</p>
                     <a href="{% url 'university_detail' university.id %}" class="btn btn-primary">Подробнее</a>
                 </div>

@@ -30,6 +30,19 @@ class University(models.Model):
         auto_now=True,
         verbose_name='Дата обновления'
     )
+    rating = models.FloatField(
+        default=0.0,
+        verbose_name='Рейтинг'
+    )
+    def update_rating(self):
+        """Пересчитывает рейтинг на основе опубликованных отзывов"""
+        published_reviews = self.reviews.filter(moderated=True)
+        if published_reviews.exists():
+            avg = published_reviews.aggregate(models.Avg('rating'))['rating__avg']
+            self.rating = round(avg, 2)  # округляем до двух знаков
+        else:
+            self.rating = 0.0
+        self.save(update_fields=['rating'])
 
     class Meta:
         verbose_name = 'Университет'
@@ -73,6 +86,9 @@ class Review(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['author', 'university'], name='unique_review_per_user_per_university')
+        ]
 
     def __str__(self):
         return f'Отзыв от {self.author.username if self.author else "Аноним"} о {self.university.name}'
