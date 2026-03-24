@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои отзывы{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Мои отзывы</h1>
+            
+            {% if page_obj %}
+                <div class="row">
+                    {% for review in page_obj %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <strong>{{ review.target_name }}</strong>
+                                    <span class="badge bg-primary float-end">Оценка: {{ review.rating }}/5</span>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ review.text|truncatewords:30|linebreaks }}</p>
+                                    <small class="text-muted">
+                                        Тип: 
+                                        {% if review.target_type == 'university' %}ВУЗ
+                                        {% elif review.target_type == 'faculty' %}Факультет
+                                        {% else %}Преподаватель
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="card-footer text-muted">
+                                    <small>{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                                    {% if review.moderated %}
+                                        <span class="badge bg-success ms-2">Опубликован</span>
+                                    {% else %}
+                                        <span class="badge bg-warning ms-2">На модерации</span>
+                                    {% endif %}
+                                    <div class="mt-2">
+                                        <a href="{% url review.url_name review.target_id %}#reviews" class="btn btn-sm btn-outline-primary">Перейти</a>
+                                        {% if review.target_type == 'university' %}
+                                            <a href="{% url 'edit_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                                            <a href="{% url 'delete_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
+                                        {% elif review.target_type == 'faculty' %}
+                                            <a href="{% url 'edit_faculty_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                                            <a href="{% url 'delete_faculty_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
+                                        {% else %}
+                                            <a href="{% url 'edit_teacher_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                                            <a href="{% url 'delete_teacher_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Пагинация -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Пагинация">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?page=1">&laquo;&laquo;</a></li>
+                                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">&raquo;&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info">
+                    Вы ещё не оставили ни одного отзыва. <a href="{% url 'index' %}">Написать отзыв</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

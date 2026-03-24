@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ teacher.last_name }} {{ teacher.first_name }} - Отзывы о преподавателях{% endblock %}
+
+{% block content %}
+<!-- Хлебные крошки -->
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'university_detail' teacher.university.id %}">{{ teacher.university.name }}</a></li>
+                {% if teacher.faculty %}
+                    <li class="breadcrumb-item"><a href="{% url 'faculty_detail' teacher.faculty.id %}">{{ teacher.faculty.name }}</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">{{ teacher.last_name }} {{ teacher.first_name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Информация о преподавателе -->
+<div class="row">
+    <div class="col-md-8">
+        <h1>{{ teacher.last_name }} {{ teacher.first_name }}</h1>
+        <p class="lead">{{ teacher.university.name }}</p>
+        {% if teacher.faculty %}
+            <p><i class="bi bi-book"></i> Факультет: {{ teacher.faculty.name }}</p>
+        {% endif %}
+        <hr>
+        <p>{{ teacher.description|linebreaks }}</p>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Информация</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><i class="bi bi-building me-2"></i>Университет: {{ teacher.university.name }}</li>
+                {% if teacher.faculty %}
+                    <li class="list-group-item"><i class="bi bi-book me-2"></i>Факультет: {{ teacher.faculty.name }}</li>
+                {% endif %}
+                <li class="list-group-item"><i class="bi bi-star-fill me-2"></i>Рейтинг: 
+                    {% if teacher.rating > 0 %}
+                        {{ teacher.rating|floatformat:2 }} / 5
+                    {% else %}
+                        пока нет оценок
+                    {% endif %}
+                </li>
+                <li class="list-group-item"><i class="bi bi-chat-dots-fill me-2"></i>Всего отзывов: {{ page_obj.paginator.count }}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Блок: Ваш отзыв / Форма добавления -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Ваш отзыв</h3>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    {% if user_review %}
+                        <div class="mb-3">
+                            <p>Вы уже оставили отзыв для этого преподавателя:</p>
+                            <blockquote class="blockquote p-3 bg-light rounded">
+                                {{ user_review.text|truncatewords:30|linebreaks }}
+                            </blockquote>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'edit_teacher_review' user_review.id %}" class="btn btn-warning">
+                                    <i class="bi bi-pencil-square me-1"></i>Редактировать
+                                </a>
+                                <a href="{% url 'delete_teacher_review' user_review.id %}" class="btn btn-danger">
+                                    <i class="bi bi-trash3 me-1"></i>Удалить
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <form method="post">
+                            {% csrf_token %}
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <label for="{{ form.text.id_for_label }}" class="form-label">{{ form.text.label }}</label>
+                                {{ form.text }}
+                                {% if form.text.errors %}<div class="text-danger">{{ form.text.errors }}</div>{% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.rating.id_for_label }}" class="form-label">{{ form.rating.label }}</label>
+                                {{ form.rating }}
+                                {% if form.rating.errors %}<div class="text-danger">{{ form.rating.errors }}</div>{% endif %}
+                            </div>
+                            <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p>Чтобы оставить отзыв, <a href="{% url 'account_login' %}?next={{ request.path }}">войдите на сайт</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список отзывов -->
+<div class="row mt-4" id="reviews">
+    <div class="col-12">
+        <h2>Отзывы</h2>
+        {% if page_obj %}
+            {% for review in page_obj %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header">
+                        <strong>{{ review.author.email|truncatechars:30 }}</strong>
+                        <span class="badge bg-primary float-end">Оценка: {{ review.rating }}/5</span>
+                        {% if user.is_authenticated and review.author == user %}
+                            <a href="{% url 'edit_teacher_review' review.id %}" class="btn btn-sm btn-warning float-end me-2">Редактировать</a>
+                            <a href="{% url 'delete_teacher_review' review.id %}" class="btn btn-sm btn-danger float-end me-2">Удалить</a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ review.text|linebreaks }}</p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        {{ review.created_at|date:"d.m.Y H:i" }}
+                        {% if not review.moderated %}
+                            <span class="badge bg-warning ms-2">На модерации</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Пагинация -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Пагинация отзывов">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}#reviews">&laquo;</a></li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}#reviews">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}#reviews">&raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <p>Пока нет отзывов. Будьте первым!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

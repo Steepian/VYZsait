@@ -1,23 +1,29 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ university.name }} - Отзывы о ВУЗах{% endblock %}
 
 {% block content %}
-<!-- Хлебные крошки  -->
+<!-- Хлебные крошки -->
 <div class="row">
     <div class="col-12">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ university.name }}</li>
+                <li class="breadcrumb-item active">{{ university.name }}</li>
             </ol>
         </nav>
     </div>
 </div>
 
-<!-- Информация о вузе  -->
+<!-- Основная информация о вузе -->
 <div class="row">
     <div class="col-md-8">
+        {% if university.image %}
+            <div class="text-center mb-3">
+                <img src="{{ university.image.url }}" class="img-fluid rounded" alt="{{ university.name }}" style="max-height: 300px; object-fit: cover;">
+            </div>
+        {% endif %}
         <h1>{{ university.name }}</h1>
         <p class="lead">{{ university.city }}</p>
         {% if university.website %}
@@ -28,44 +34,55 @@
     </div>
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header">
-                Информация
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Информация</h5>
             </div>
             <ul class="list-group list-group-flush">
-                <li class="list-group-item">Город: {{ university.city }}</li>
-                <li class="list-group-item">Всего отзывов: {{ reviews|length }}</li>
-                <li class="list-group-item">Добавлен: {{ university.created_at|date:"d.m.Y" }}</li>
-                <li class="list-group-item">Рейтинг: 
+                <li class="list-group-item"><i class="bi bi-geo-alt-fill me-2"></i>Город: {{ university.city }}</li>
+                <li class="list-group-item"><i class="bi bi-star-fill me-2"></i>Рейтинг: 
                     {% if university.rating > 0 %}
-                        {{ university.rating }} / 5
+                        {{ university.rating|floatformat:2 }} / 5
                     {% else %}
                         пока нет оценок
                     {% endif %}
                 </li>
+                <li class="list-group-item"><i class="bi bi-chat-dots-fill me-2"></i>Всего отзывов: {{ page_obj.paginator.count }}</li>
+                <li class="list-group-item"><i class="bi bi-calendar-plus-fill me-2"></i>Добавлен: {{ university.created_at|date:"d.m.Y" }}</li>
             </ul>
         </div>
     </div>
 </div>
-<!-- Форма добавления отзыва или сообщение о существующем отзыве -->
+
+<!-- Блок: Ваш отзыв / Форма добавления (оставляем) -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h3>Ваш отзыв</h3>  <!-- Изменили заголовок, так как форма скрыта -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Ваш отзыв</h3>
             </div>
             <div class="card-body">
                 {% if user.is_authenticated %}
                     {% if user_review %}
-                        <p>Вы уже оставили отзыв для этого вуза:</p>
-                        <blockquote class="blockquote">{{ user_review.text|truncatewords:20 }}</blockquote>
-                        <div class="d-flex gap-2">  <!-- Кнопки в ряд -->
-                            <a href="{% url 'edit_review' user_review.id %}" class="btn btn-warning">Редактировать</a>
-                            <a href="{% url 'delete_review' user_review.id %}" class="btn btn-danger">Удалить</a>
+                        <div class="mb-3">
+                            <p>Вы уже оставили отзыв для этого вуза:</p>
+                            <blockquote class="blockquote p-3 bg-light rounded">
+                                {{ user_review.text|truncatewords:30|linebreaks }}
+                            </blockquote>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'edit_review' user_review.id %}" class="btn btn-warning">
+                                    <i class="bi bi-pencil-square me-1"></i>Редактировать
+                                </a>
+                                <a href="{% url 'delete_review' user_review.id %}" class="btn btn-danger">
+                                    <i class="bi bi-trash3 me-1"></i>Удалить
+                                </a>
+                            </div>
                         </div>
                     {% else %}
-                        <!-- Форма создания нового отзыва -->
                         <form method="post">
                             {% csrf_token %}
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                            {% endif %}
                             <div class="mb-3">
                                 <label for="{{ form.text.id_for_label }}" class="form-label">{{ form.text.label }}</label>
                                 {{ form.text }}
@@ -80,82 +97,143 @@
                         </form>
                     {% endif %}
                 {% else %}
-                    <p>Чтобы оставить отзыв, <a href="{% url 'login' %}?next={{ request.path }}">войдите на сайт</a>.</p>
+                    <p>Чтобы оставить отзыв, <a href="{% url 'account_login' %}?next={{ request.path }}">войдите на сайт</a>.</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
-<!-- ========== СПИСОК ОТЗЫВОВ ========== -->
-<div class="row mt-4" id="reviews">
+
+<!-- Вкладки для переключения контента -->
+<div class="row mt-4">
     <div class="col-12">
-        <h2>Отзывы</h2>
-        {% for review in page_obj %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <strong>{{ review.author.username|default:"Аноним" }}</strong>
-                    <span class="badge bg-primary float-end">Оценка: {{ review.rating }}/5</span>
-                    <!-- Если это отзыв текущего пользователя, добавим кнопку редактирования -->
-                    {% if user.is_authenticated and review.author == user %}
-                        <a href="{% url 'edit_review' review.id %}" class="btn btn-sm btn-warning float-end me-2">Редактировать</a>
-                        <a href="{% url 'delete_review' review.id %}" class="btn btn-sm btn-danger float-end me-2">Удалить</a>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    <p class="card-text">{{ review.text|linebreaks }}</p>
-                </div>
-                <div class="card-footer text-muted">
-                    {{ review.created_at|date:"d.m.Y H:i" }}
-                </div>
-            </div>
-        {% empty %}
-            <p>Пока нет отзывов. Будьте первым!</p>
-        {% endfor %}
-
-        <!-- Пагинация -->
-        {% if page_obj.has_other_pages %}
-            <nav aria-label="Навигация по страницам">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1" aria-label="Первая">
-                                <span aria-hidden="true">&laquo;&laquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Предыдущая">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                    {% endif %}
-
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
-                        {% endif %}
+        <ul class="nav nav-tabs" id="universityTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="true">
+                    <i class="bi bi-chat-dots-fill me-1"></i> Отзывы
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="faculties-tab" data-bs-toggle="tab" data-bs-target="#faculties" type="button" role="tab" aria-controls="faculties" aria-selected="false">
+                    <i class="bi bi-building me-1"></i> Факультеты
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab" aria-controls="teachers" aria-selected="false">
+                    <i class="bi bi-person-badge me-1"></i> Преподаватели
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content mt-3" id="universityTabsContent">
+            <!-- Вкладка: Отзывы -->
+            <div class="tab-pane fade show active" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                {% if page_obj %}
+                    {% for review in page_obj %}
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-header">
+                                <strong>{{ review.author.email|truncatechars:30 }}</strong>
+                                <span class="badge bg-primary float-end">Оценка: {{ review.rating }}/5</span>
+                                {% if user.is_authenticated and review.author == user %}
+                                    <a href="{% url 'edit_review' review.id %}" class="btn btn-sm btn-warning float-end me-2">Редактировать</a>
+                                    <a href="{% url 'delete_review' review.id %}" class="btn btn-sm btn-danger float-end me-2">Удалить</a>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ review.text|linebreaks }}</p>
+                            </div>
+                            <div class="card-footer text-muted">
+                                {{ review.created_at|date:"d.m.Y H:i" }}
+                                {% if not review.moderated %}
+                                    <span class="badge bg-warning ms-2">На модерации</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     {% endfor %}
 
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Следующая">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Последняя">
-                                <span aria-hidden="true">&raquo;&raquo;</span>
-                            </a>
-                        </li>
+                    <!-- Пагинация отзывов -->
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="Пагинация отзывов">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}#reviews">&laquo;</a></li>
+                                {% endif %}
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ num }}#reviews">{{ num }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if page_obj.has_next %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}#reviews">&raquo;</a></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
                     {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
+                {% else %}
+                    <p>Пока нет отзывов. Будьте первым!</p>
+                {% endif %}
+            </div>
+
+            <!-- Вкладка: Факультеты -->
+            <div class="tab-pane fade" id="faculties" role="tabpanel" aria-labelledby="faculties-tab">
+                {% if faculties %}
+                    <div class="row">
+                        {% for faculty in faculties %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ faculty.name }}</h5>
+                                        <p class="card-text">{{ faculty.description|truncatewords:20 }}</p>
+                                        <p><strong>Рейтинг:</strong> 
+                                            {% if faculty.rating > 0 %}
+                                                {{ faculty.rating|floatformat:2 }}/5
+                                            {% else %}
+                                                пока нет оценок
+                                            {% endif %}
+                                        </p>
+                                        <a href="{% url 'faculty_detail' faculty.id %}" class="btn btn-outline-primary">Подробнее</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>На этом факультете пока нет отзывов. <a href="{% url 'admin:main_faculty_add' %}?university={{ university.id }}">Добавить факультет</a> (только для администратора).</p>
+                {% endif %}
+            </div>
+
+            <!-- Вкладка: Преподаватели -->
+            <div class="tab-pane fade" id="teachers" role="tabpanel" aria-labelledby="teachers-tab">
+                {% if teachers %}
+                    <div class="row">
+                        {% for teacher in teachers %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ teacher.last_name }} {{ teacher.first_name }}</h5>
+                                        {% if teacher.faculty %}
+                                            <h6 class="card-subtitle mb-2 text-muted">{{ teacher.faculty.name }}</h6>
+                                        {% endif %}
+                                        <p class="card-text">{{ teacher.description|truncatewords:20 }}</p>
+                                        <p><strong>Рейтинг:</strong> 
+                                            {% if teacher.rating > 0 %}
+                                                {{ teacher.rating|floatformat:2 }}/5
+                                            {% else %}
+                                                пока нет оценок
+                                            {% endif %}
+                                        </p>
+                                        <a href="{% url 'teacher_detail' teacher.id %}" class="btn btn-outline-primary">Подробнее</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>Преподавателей пока нет. <a href="{% url 'admin:main_teacher_add' %}?university={{ university.id }}">Добавить преподавателя</a> (только для администратора).</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
-<!-- ========== КОНЕЦ БЛОКА ОТЗЫВОВ ========== -->
-
-
-
 {% endblock %}

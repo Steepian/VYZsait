@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Управление email{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h3 class="mb-0">Настройки email</h3>
+            </div>
+            <div class="card-body p-4">
+                {% if user.emailaddress_set.all %}
+                    <p class="text-muted mb-3">Следующие email адреса привязаны к вашей учётной записи:</p>
+                    
+                    <form method="post" action="{% url 'account_email' %}">
+                        {% csrf_token %}
+                        
+                        <div class="list-group mb-4">
+                            {% for emailaddress in user.emailaddress_set.all %}
+                                <div class="list-group-item">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="email" value="{{ emailaddress.email }}" id="email_{{ forloop.counter }}" {% if emailaddress.primary %}checked{% endif %}>
+                                        <label class="form-check-label w-100" for="email_{{ forloop.counter }}">
+                                            {{ emailaddress.email }}
+                                            {% if emailaddress.verified %}
+                                                <span class="badge bg-success ms-2">Подтверждён</span>
+                                            {% else %}
+                                                <span class="badge bg-warning ms-2">Не подтверждён</span>
+                                            {% endif %}
+                                            {% if emailaddress.primary %}
+                                                <span class="badge bg-primary ms-2">Основной</span>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <button type="submit" name="action_primary" class="btn btn-outline-primary">
+                                <i class="bi bi-star-fill me-1"></i> Сделать основным
+                            </button>
+                            <button type="submit" name="action_send" class="btn btn-outline-secondary">
+                                <i class="bi bi-envelope-paper me-1"></i> Подтвердить
+                            </button>
+                            <button type="submit" name="action_remove" class="btn btn-outline-danger">
+                                <i class="bi bi-trash3 me-1"></i> Удалить
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle me-2"></i> У вас пока нет привязанных email адресов.
+                    </div>
+                {% endif %}
+                
+                <hr class="my-4">
+                
+                <h5>Добавить email</h5>
+                <form method="post" action="{% url 'account_email' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">Email адрес</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" name="action_add" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i> Добавить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .list-group-item {
+        padding: 0.75rem 1rem;
+    }
+    .list-group-item .form-check {
+        margin-bottom: 0;
+    }
+    .list-group-item .badge {
+        font-weight: normal;
+        margin-left: 0.5rem;
+    }
+    .btn {
+        transition: all 0.2s;
+    }
+    .btn-outline-primary:hover {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-success {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    .btn-success:hover {
+        background-color: #157347;
+        border-color: #146c43;
+    }
+</style>
+{% endblock %}

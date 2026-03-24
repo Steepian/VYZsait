@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление отзыва{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h3>Подтверждение удаления</h3>
+            </div>
+            <div class="card-body">
+                <p>Вы уверены, что хотите удалить свой отзыв о преподавателе {{ review.teacher.last_name }} {{ review.teacher.first_name }}?</p>
+                <p class="text-muted">{{ review.text|truncatewords:30 }}</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Да, удалить</button>
+                    <a href="{% url 'teacher_detail' review.teacher.id %}#reviews" class="btn btn-secondary">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -29,6 +29,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "main",
+    'django.contrib.sites',  
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.yandex',
 ]
 
 MIDDLEWARE = [
@@ -39,6 +44,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -112,3 +118,63 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  
+    'allauth.account.auth_backends.AuthenticationBackend',  
+]
+
+SITE_ID = 1
+# Настройки allauth
+ACCOUNT_EMAIL_REQUIRED = True           # Email обязателен
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Подтверждение email обязательно
+ACCOUNT_AUTHENTICATION_METHOD = 'email'   # Вход по email (а не по username)
+ACCOUNT_USERNAME_REQUIRED = False         # Username не обязателен
+ACCOUNT_UNIQUE_EMAIL = True                # Email должен быть уникальным
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True        # Подтверждение по ссылке
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3  # Срок действия ссылки
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Куда перенаправлять после входа
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'yandex': {
+        'SCOPE': ['login:email', 'login:info'],  # email + имя/фамилия
+        'AUTH_PARAMS': {'response_type': 'code'},
+    }
+}
+
+# Для разработки – письма будут выводиться в консоль
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'univernik1@gmail.com'
+EMAIL_HOST_PASSWORD = 'nolp egvw qupf cjee'  # пароль приложения, не обычный!
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+
+ACCOUNT_FORMS = {
+    'login': 'allauth.account.forms.LoginForm',
+    'signup': 'allauth.account.forms.SignupForm',
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

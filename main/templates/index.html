@@ -1,38 +1,81 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Главная - Отзывы о ВУЗах{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Список университетов</h1>
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5">Все университеты</h1>
+        <p class="lead">Найдите свой вуз и оставьте отзыв</p>
+    </div>
+</div>
 
 <div class="row">
     {% for university in universities %}
         <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100">
+            <div class="card h-100 shadow-sm">
+                {% if university.image %}
+                    <img src="{{ university.image.url }}" class="card-img-top" alt="{{ university.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="bi bi-building fs-1"></i>
+                    </div>
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ university.name }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ university.city }}</h6>
-                    <!-- Рейтинг -->
-                    <p class="mb-2">
-                        Рейтинг: 
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <i class="bi bi-geo-alt-fill"></i> {{ university.city }}
+                    </h6>
+                    <p class="card-text">
+                        <strong>Рейтинг:</strong>
                         {% if university.rating > 0 %}
                             {{ university.rating }} / 5
                         {% else %}
                             пока нет оценок
                         {% endif %}
                     </p>
-                    <p class="card-text">{{ university.description|truncatewords:30 }}</p>
-                    <a href="{% url 'university_detail' university.id %}" class="btn btn-primary">Подробнее</a>
+                    <p class="card-text">{{ university.description|truncatewords:25 }}</p>
+                    <a href="{% url 'university_detail' university.id %}" class="btn btn-primary stretched-link">Подробнее</a>
                 </div>
                 <div class="card-footer text-muted">
-                    Добавлено: {{ university.created_at|date:"d.m.Y" }}
+                    <small>Добавлен: {{ university.created_at|date:"d.m.Y" }}</small>
                 </div>
             </div>
         </div>
     {% empty %}
         <div class="col-12">
-            <p>Пока нет ни одного университета. Добавьте первый через админку.</p>
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i> Ни одного университета не найдено.
+                {% if request.GET.q %}
+                    Попробуйте изменить поисковый запрос.
+                {% else %}
+                    Первый вуз можно добавить через <a href="/admin">админ-панель</a>.
+                {% endif %}
+            </div>
         </div>
     {% endfor %}
 </div>
+
+{% if universities.has_other_pages %}
+    <nav aria-label="Пагинация">
+        <ul class="pagination justify-content-center">
+            {% if universities.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&laquo;&laquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ universities.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&laquo;</a></li>
+            {% endif %}
+            {% for num in universities.paginator.page_range %}
+                {% if universities.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > universities.number|add:'-3' and num < universities.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if universities.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ universities.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&raquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ universities.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">&raquo;&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
 {% endblock %}
