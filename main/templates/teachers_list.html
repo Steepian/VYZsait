@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Преподаватели{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Преподаватели</h1>
+        <p class="lead">Все преподаватели в нашей базе</p>
+    </div>
+    <div class="col-md-4">
+        <form method="get" action="{% url 'teachers_list' %}" class="d-flex">
+            <input class="form-control me-2" type="search" placeholder="Поиск по имени, фамилии, вузу или факультету..." name="q" value="{{ query|default:''  }}">
+            <button class="btn btn-outline-primary" type="submit">Найти</button>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    {% for teacher in page_obj %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ teacher.last_name }} {{ teacher.first_name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ teacher.university.name }}</h6>
+                    {% if teacher.faculty %}
+                        <p class="card-text"><small class="text-muted">Факультет: {{ teacher.faculty.name }}</small></p>
+                    {% endif %}
+                    <p class="card-text">{{ teacher.description|truncatewords:20 }}</p>
+                    <p><strong>Рейтинг:</strong> 
+                        {% if teacher.rating > 0 %}
+                            {{ teacher.rating|floatformat:2 }}/5
+                        {% else %}
+                            пока нет оценок
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'teacher_detail' teacher.id %}" class="btn btn-primary stretched-link">Подробнее</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i> Преподавателей не найдено.
+                {% if query %}Попробуйте изменить поисковый запрос.{% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+    <nav aria-label="Пагинация">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">&laquo;&laquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">&laquo;</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">&raquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">&raquo;&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

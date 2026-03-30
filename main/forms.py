@@ -1,5 +1,5 @@
 from django import forms
-from .models import Review, FacultyReview, TeacherReview
+from .models import Review, TeacherReview, SpecialtyReview
 
 class ReviewForm(forms.ModelForm):
     """
@@ -24,9 +24,10 @@ class ReviewForm(forms.ModelForm):
             raise forms.ValidationError('Отзыв должен быть содержательным (минимум 10 символов)')
         return text
     
-class FacultyReviewForm(forms.ModelForm):
+
+class TeacherReviewForm(forms.ModelForm):
     class Meta:
-        model = FacultyReview
+        model = TeacherReview
         fields = ['text', 'rating']
         labels = {
             'text': 'Текст отзыва',
@@ -42,11 +43,10 @@ class FacultyReviewForm(forms.ModelForm):
         if len(text) < 10:
             raise forms.ValidationError('Отзыв должен быть содержательным (минимум 10 символов)')
         return text
-
-
-class TeacherReviewForm(forms.ModelForm):
+    
+class SpecialtyReviewForm(forms.ModelForm):
     class Meta:
-        model = TeacherReview
+        model = SpecialtyReview
         fields = ['text', 'rating']
         labels = {
             'text': 'Текст отзыва',

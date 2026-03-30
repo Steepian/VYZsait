@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import mark_safe
-from .models import University, Review, Faculty, Teacher, FacultyReview, TeacherReview
+from .models import University, Review, Faculty, Teacher, TeacherReview, Specialty, SpecialtyReview
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
@@ -47,11 +47,10 @@ class TeacherAdmin(admin.ModelAdmin):
     search_fields = ('last_name', 'first_name', 'university__name')
     fields = ('first_name', 'last_name', 'description', 'university', 'faculty')
 
-
-@admin.register(FacultyReview)
-class FacultyReviewAdmin(admin.ModelAdmin):
-    list_display = ('author_username', 'faculty', 'rating', 'created_at', 'moderated')
-    list_filter = ('moderated', 'rating', 'faculty')
+@admin.register(TeacherReview)
+class TeacherReviewAdmin(admin.ModelAdmin):
+    list_display = ('author_username', 'teacher', 'rating', 'created_at', 'moderated')
+    list_filter = ('moderated', 'rating', 'teacher')
     search_fields = ('author__username', 'text')
     actions = ['approve_reviews']
 
@@ -63,11 +62,22 @@ class FacultyReviewAdmin(admin.ModelAdmin):
         queryset.update(moderated=True)
     approve_reviews.short_description = "Одобрить выбранные отзывы"
 
+@admin.register(Specialty)
+class SpecialtyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'display_universities', 'rating', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'code')
+    filter_horizontal = ('universities',)  # удобный виджет для ManyToMany
 
-@admin.register(TeacherReview)
-class TeacherReviewAdmin(admin.ModelAdmin):
-    list_display = ('author_username', 'teacher', 'rating', 'created_at', 'moderated')
-    list_filter = ('moderated', 'rating', 'teacher')
+    def display_universities(self, obj):
+        return ', '.join([uni.name for uni in obj.universities.all()[:3]]) + ('...' if obj.universities.count() > 3 else '')
+    display_universities.short_description = 'Университеты'
+
+
+@admin.register(SpecialtyReview)
+class SpecialtyReviewAdmin(admin.ModelAdmin):
+    list_display = ('author_username', 'specialty', 'rating', 'created_at', 'moderated')
+    list_filter = ('moderated', 'rating', 'specialty')
     search_fields = ('author__username', 'text')
     actions = ['approve_reviews']
 

@@ -114,8 +114,8 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="faculties-tab" data-bs-toggle="tab" data-bs-target="#faculties" type="button" role="tab" aria-controls="faculties" aria-selected="false">
-                    <i class="bi bi-building me-1"></i> Факультеты
+                <button class="nav-link" id="specialties-tab" data-bs-toggle="tab" data-bs-target="#specialties" type="button" role="tab" aria-controls="specialties" aria-selected="false">
+                    <i class="bi bi-mortarboard me-1"></i> Специальности
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -176,30 +176,33 @@
             </div>
 
             <!-- Вкладка: Факультеты -->
-            <div class="tab-pane fade" id="faculties" role="tabpanel" aria-labelledby="faculties-tab">
-                {% if faculties %}
-                    <div class="row">
-                        {% for faculty in faculties %}
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ faculty.name }}</h5>
-                                        <p class="card-text">{{ faculty.description|truncatewords:20 }}</p>
-                                        <p><strong>Рейтинг:</strong> 
-                                            {% if faculty.rating > 0 %}
-                                                {{ faculty.rating|floatformat:2 }}/5
-                                            {% else %}
-                                                пока нет оценок
+            <div class="tab-pane fade" id="specialties" role="tabpanel" aria-labelledby="specialties-tab">
+                    {% if specialties %}
+                        <div class="row">
+                            {% for specialty in specialties %}
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ specialty.name }}</h5>
+                                            {% if specialty.code %}
+                                                <h6 class="card-subtitle mb-2 text-muted">{{ specialty.code }}</h6>
                                             {% endif %}
-                                        </p>
-                                        <a href="{% url 'faculty_detail' faculty.id %}" class="btn btn-outline-primary">Подробнее</a>
+                                            <p class="card-text">{{ specialty.description|truncatewords:20 }}</p>
+                                            <p><strong>Рейтинг:</strong> 
+                                                {% if specialty.rating > 0 %}
+                                                    {{ specialty.rating|floatformat:2 }}/5
+                                                {% else %}
+                                                    пока нет оценок
+                                                {% endif %}
+                                            </p>
+                                            <a href="{% url 'specialty_detail' specialty.id %}" class="btn btn-outline-primary">Подробнее</a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        {% endfor %}
-                    </div>
+                            {% endfor %}
+                        </div>
                 {% else %}
-                    <p>На этом факультете пока нет отзывов. <a href="{% url 'admin:main_faculty_add' %}?university={{ university.id }}">Добавить факультет</a> (только для администратора).</p>
+                    <p>Специальности пока не добавлены. <a href="{% url 'admin:main_specialty_add' %}?university={{ university.id }}">Добавить специальность</a> (только для администратора).</p>
                 {% endif %}
             </div>
 

@@ -173,8 +173,44 @@ class Teacher(models.Model):
         self.save(update_fields=['rating'])
 
 
-class FacultyReview(models.Model):
-    """Отзыв на факультет"""
+class Specialty(models.Model):
+    """Модель специальности (направления подготовки)"""
+    name = models.CharField(max_length=255, verbose_name='Название')
+    code = models.CharField(max_length=20, blank=True, verbose_name='Код специальности')
+    description = models.TextField(blank=True, verbose_name='Описание')
+    universities = models.ManyToManyField(University, related_name='specialties', blank=True)
+    faculty = models.ForeignKey(
+        Faculty,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='specialties',
+        verbose_name='Факультет (опционально)'
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    rating = models.FloatField(default=0.0, verbose_name='Рейтинг')
+
+    class Meta:
+        verbose_name = 'Специальность'
+        verbose_name_plural = 'Специальности'
+        ordering = ['name']
+
+    def __str__(self):
+        uni_names = ', '.join([uni.name for uni in self.universities.all()[:2]])
+        if self.universities.count() > 2:
+            uni_names += '...'
+        return f'{self.name} (вузы: {uni_names})'
+
+    def update_rating(self):
+        published_reviews = self.specialty_reviews.filter(moderated=True)
+        avg = published_reviews.aggregate(models.Avg('rating'))['rating__avg']
+        self.rating = round(avg, 2) if avg is not None else 0.0
+        self.save(update_fields=['rating'])
+
+
+class SpecialtyReview(models.Model):
+    """Отзыв на специальность"""
     RATING_CHOICES = [
         (1, '1 - Ужасно'),
         (2, '2 - Плохо'),
@@ -183,16 +219,16 @@ class FacultyReview(models.Model):
         (5, '5 - Отлично'),
     ]
 
-    faculty = models.ForeignKey(
-        Faculty,
+    specialty = models.ForeignKey(
+        Specialty,
         on_delete=models.CASCADE,
-        related_name='faculty_reviews',
-        verbose_name='Факультет'
+        related_name='specialty_reviews',
+        verbose_name='Специальность'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='faculty_reviews',
+        related_name='specialty_reviews',
         verbose_name='Автор'
     )
     text = models.TextField(verbose_name='Текст отзыва')
@@ -201,15 +237,15 @@ class FacultyReview(models.Model):
     moderated = models.BooleanField(default=False, verbose_name='Прошел модерацию')
 
     class Meta:
-        verbose_name = 'Отзыв на факультет'
-        verbose_name_plural = 'Отзывы на факультеты'
+        verbose_name = 'Отзыв на специальность'
+        verbose_name_plural = 'Отзывы на специальности'
         ordering = ['-created_at']
         constraints = [
-            models.UniqueConstraint(fields=['author', 'faculty'], name='unique_faculty_review_per_user')
+            models.UniqueConstraint(fields=['author', 'specialty'], name='unique_specialty_review_per_user')
         ]
 
     def __str__(self):
-        return f'Отзыв от {self.author} о факультете {self.faculty.name}'
+        return f'Отзыв от {self.author} о специальности {self.specialty.name}'
 
 
 class TeacherReview(models.Model):

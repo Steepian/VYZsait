@@ -39,10 +39,10 @@
                                         {% if review.target_type == 'university' %}
                                             <a href="{% url 'edit_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
                                             <a href="{% url 'delete_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
-                                        {% elif review.target_type == 'faculty' %}
-                                            <a href="{% url 'edit_faculty_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
-                                            <a href="{% url 'delete_faculty_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
-                                        {% else %}
+                                        {% elif review.target_type == 'specialty' %}
+                                            <a href="{% url 'edit_specialty_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                                            <a href="{% url 'delete_specialty_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
+                                        {% elif review.target_type == 'teacher' %}
                                             <a href="{% url 'edit_teacher_review' review.id %}" class="btn btn-sm btn-warning">Редактировать</a>
                                             <a href="{% url 'delete_teacher_review' review.id %}" class="btn btn-sm btn-danger">Удалить</a>
                                         {% endif %}
